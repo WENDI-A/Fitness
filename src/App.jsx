@@ -1,8 +1,8 @@
-import Header from "./Header";
-import Home from "./Home";
-import About from "./About";
-import Contact from "./Contact ";
-import Testimonials from "./Testimonials";
+import Header from "./pages/Header";
+import Home from "./pages/Home";
+import About from "./pages/About";
+import Contact from "./pages/Contact ";
+import Testimonials from "./pages/Testimonials";
 
 function App() {
   return (

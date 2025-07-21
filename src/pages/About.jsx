@@ -1,6 +1,6 @@
-import nobody from "./assets/nobody.jpeg";
-import spa from "./assets/spa.png";
-import expert from "./assets/expert.avif";
+import nobody from "../assets/nobody.jpeg";
+import spa from "../assets/spa.png";
+import expert from "../assets/expert.avif";
 
 const images = [
   {

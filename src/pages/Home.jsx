@@ -1,4 +1,4 @@
-import gym from "./assets/gym.jpeg";
+import gym from "../assets/gym.jpeg";
 
 const Home = () => {
   return (
