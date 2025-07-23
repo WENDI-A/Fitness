@@ -105,9 +105,6 @@ const Contact  = ()=>{
 
          
              </div>
-             <div className='min-h-screen'>
-              <h1>hi</h1>
-             </div>
           </div>
     )
 }
