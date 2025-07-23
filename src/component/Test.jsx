@@ -34,7 +34,7 @@ const Test = () => {
 
   return (
     <div className="bg-black py-10 px-4">
-      <h1 className="text-3xl font-bold text-white mb-6 text-center">Testimonials</h1>
+      <h1 className="text-4xl font-bold text-white mb-6 text-center">Testimonials</h1>
 
       <div className="max-w-6xl mx-auto">
         <Swiper

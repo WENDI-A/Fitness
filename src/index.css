@@ -1,1 +1,26 @@
 @import "tailwindcss";
+/* Make the container relative to position arrows absolutely */
+.max-w-6xl {
+  position: relative;
+}
+
+/* Move left arrow outside the container */
+.max-w-6xl .swiper-button-prev {
+  left: -10px;  /* Adjust this value to move more or less */
+  color:red;
+  z-index: 10;
+}
+
+/* Move right arrow outside the container */
+.max-w-6xl .swiper-button-next {
+  right: 40px; /* Adjust this value to move more or less */
+  color:red;
+  z-index: 10;
+}
+
+/* Optional: make arrows bigger */
+.max-w-6xl .swiper-button-prev::after,
+.max-w-6xl .swiper-button-next::after {
+  font-size: 24px;
+  font-weight: bold;
+}
