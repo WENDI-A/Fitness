@@ -6,7 +6,7 @@ const router = express.Router();
 
 // Temporarily disable authentication for testing
 // router.use(verifyToken);
-
+router.use(verifyToken);
 // Feedback routes
 router.get("/", getUserFeedback);
 router.post("/", createFeedback);

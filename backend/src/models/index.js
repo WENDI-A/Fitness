@@ -3,8 +3,10 @@ import User from "./userModel.js";
 import Membership from "./membershipModel.js";
 import Trainer from "./trainerModel.js";
 import Payment from "./paymentModel.js";
-import Subscription from "./subscriptionModel.js"; 
+import Subscription from "./subscriptionModel.js";
 import Feedback from "./feedbackModel.js";
+import Notification from "./notificationModel.js";
+import Contact from "./contactModel.js";
 
 // Define associations with reduced indexes to avoid MySQL 64 key limit
 // User associations - only essential indexes
@@ -39,7 +41,9 @@ Trainer.belongsTo(User, { foreignKey: 'user_id' });
 
 // Essential associations only
 Payment.belongsTo(User, { foreignKey: 'user_id' });
+Payment.belongsTo(Subscription, { foreignKey: 'subscription_id' });
 Feedback.belongsTo(User, { foreignKey: 'user_id' });
+Feedback.belongsTo(Trainer, { foreignKey: 'trainer_id', constraints: false });
 
 export {
   sequelize,
@@ -49,5 +53,6 @@ export {
   Payment,
   Subscription,
   Feedback,
-   
+  Notification,
+  Contact,
 };

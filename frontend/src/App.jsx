@@ -20,9 +20,20 @@ function App() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userData = localStorage.getItem("user");
-    if (token && userData) {
-      setUser(JSON.parse(userData));
-      setCurrentPage("dashboard");
+    const tokenExpiration = localStorage.getItem("tokenExpiration");
+
+    // Check if token exists and is not expired
+    if (token && userData && tokenExpiration) {
+      const currentTime = new Date().getTime();
+      if (currentTime < parseInt(tokenExpiration)) {
+        setUser(JSON.parse(userData));
+        setCurrentPage("dashboard");
+      } else {
+        // Token expired, clear storage
+        localStorage.removeItem("token");
+        localStorage.removeItem("tokenExpiration");
+        localStorage.removeItem("user");
+      }
     }
   }, []);
 
@@ -39,6 +50,7 @@ function App() {
 
   const handleLogout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("tokenExpiration");
     localStorage.removeItem("user");
     setUser(null);
     setCurrentPage("website");
@@ -96,16 +108,16 @@ function App() {
   return (
     <ThemeProvider>
       <div className="scroll-smooth">
-        <Header 
-          user={user} 
+        <Header
+          user={user}
           onLogin={() => setShowLogin(true)}
           onLogout={handleLogout}
           onGoToDashboard={handleGoToDashboard}
         />
         <section id="home"><Home onJoinNow={() => setShowRegister(true)} /></section>
-        <section id="about"><About /></section> 
+        <section id="about"><About /></section>
         <section id="services"><Services /></section>
-        <section id="testimonials"><Testimonials /></section> 
+        <section id="testimonials"><Testimonials /></section>
         <section id="contact"><Contact /></section>
         <section id="footer"><Footer /></section>
       </div>

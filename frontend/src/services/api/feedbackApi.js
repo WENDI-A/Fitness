@@ -2,11 +2,11 @@ const API_BASE_URL = "http://localhost:5000/api";
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
-  // const token = localStorage.getItem("token");
+  const token = localStorage.getItem("token");
   return {
     "Content-Type": "application/json",
-    // Temporarily disable auth for testing
-    // Authorization: `Bearer ${token}`,
+    
+    Authorization: `Bearer ${token}`,
   };
 };
 
@@ -14,6 +14,7 @@ const getAuthHeaders = () => {
 export const getUserFeedback = async (userId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/feedback/${userId}`, {
+      method:"GET",
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch feedback");
@@ -32,8 +33,18 @@ export const createFeedback = async (feedbackData) => {
       headers: getAuthHeaders(),
       body: JSON.stringify(feedbackData),
     });
-    if (!response.ok) throw new Error("Failed to create feedback");
-    return await response.json();
+
+    const data = await response.json();
+
+    if (!response.ok) {
+        throw new Error(data.message || "Failed to create feedback")
+      
+    }
+
+    return data;
+
+     
+     
   } catch (error) {
     console.error("Create feedback error:", error);
     throw error;

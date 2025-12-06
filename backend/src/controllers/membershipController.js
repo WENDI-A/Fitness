@@ -5,7 +5,7 @@ import { Op } from "sequelize";
 export const getUserMembership = async (req, res) => {
   try {
     const userId = req.user?.id || 1;
-    
+
     // Return mock membership data
     const mockMembership = {
       id: 1,
@@ -50,7 +50,7 @@ export const getMemberships = async (req, res) => {
 export const createMembership = async (req, res) => {
   try {
     const { title, category, men_price, women_price, validity_days, features, is_highlighted } = req.body;
-    
+
     const newMembership = await Membership.create({
       title: title,
       category: category,
@@ -61,7 +61,7 @@ export const createMembership = async (req, res) => {
       is_highlighted: is_highlighted || false,
       is_active: true
     });
-    
+
     res.status(201).json({
       message: 'Membership created successfully',
       membership: newMembership

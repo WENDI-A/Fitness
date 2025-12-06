@@ -6,13 +6,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
-const TrainerPage = ({ user }) => {
+const TrainerPage = () => {
   const [trainers, setTrainers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [filterSpecialization, setFilterSpecialization] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
-  
-  
+
+
 
 
 
@@ -73,8 +73,8 @@ const TrainerPage = ({ user }) => {
   ];
 
   const filteredTrainers = trainers
-    .filter(trainer => 
-      filterSpecialization === "all" || 
+    .filter(trainer =>
+      filterSpecialization === "all" ||
       trainer.specialization.some(spec => spec.toLowerCase().includes(filterSpecialization.toLowerCase()))
     )
     .sort((a, b) => {
@@ -141,12 +141,11 @@ const TrainerPage = ({ user }) => {
       {/* Trainers Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {filteredTrainers.map((trainer) => (
-          <Card 
+          <Card
             key={trainer.id}
             onClick={() => setSelectedTrainer(trainer)}
-            className={`cursor-pointer transition-all duration-200 ${
-              selectedTrainer?.id === trainer.id ? "shadow-lg" : ""
-            }`}
+            className={`cursor-pointer transition-all duration-200 ${selectedTrainer?.id === trainer.id ? "shadow-lg" : ""
+              }`}
           >
             <CardHeader className="text-center">
               <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
@@ -228,7 +227,7 @@ const TrainerPage = ({ user }) => {
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">About</h3>
                     <p className="text-gray-600 leading-relaxed">{selectedTrainer.bio}</p>
                   </div>
-                  
+
                   <div>
                     <h3 className="text-lg font-semibold text-gray-800 mb-3">Specializations</h3>
                     <div className="flex flex-wrap gap-2">

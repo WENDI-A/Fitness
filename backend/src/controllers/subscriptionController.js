@@ -1,19 +1,19 @@
-import { User, Subscription } from "../models/index.js";
+import { User, Subscription, Membership } from "../models/index.js";
 import { Op } from "sequelize";
 
 // Get User Subscription
 export const getUserSubscription = async (req, res) => {
   try {
     const userId = req.params.userId || req.user?.id || 1;
-    
+
     const subscription = await Subscription.findOne({
-      where: { 
+      where: {
         user_id: userId,
         status: 'active'
       },
       include: [{
         model: User,
-        attributes: ['id', 'first_name',"last_name", 'email']
+        attributes: ['id', 'first_name', "last_name", 'email']
       }],
       order: [['createdAt', 'DESC']]
     });
@@ -51,9 +51,9 @@ export const getUserSubscription = async (req, res) => {
 export const getSubscriptionHistory = async (req, res) => {
   try {
     const userId = req.params.userId || req.user?.id || 1;
-    
+
     const subscriptions = await Subscription.findAll({
-      where: { 
+      where: {
         user_id: userId,
         status: { [Op.in]: ['completed', 'expired', 'cancelled'] }
       },
@@ -80,10 +80,10 @@ export const getSubscriptionHistory = async (req, res) => {
 export const getAvailableUpgrades = async (req, res) => {
   try {
     const userId = req.params.userId || req.user?.id || 1;
-    
+
     // Get current subscription to determine available upgrades
     const currentSub = await Subscription.findOne({
-      where: { 
+      where: {
         user_id: userId,
         status: 'active'
       }
@@ -101,7 +101,7 @@ export const getAvailableUpgrades = async (req, res) => {
       },
       {
         id: 2,
-        name: "Group Package - 3 Month", 
+        name: "Group Package - 3 Month",
         currentPrice: 12000,
         discountedPrice: 10800,
         savings: 1200,
@@ -127,55 +127,21 @@ export const getAvailableUpgrades = async (req, res) => {
 // Get Subscription Options
 export const getSubscriptionOptions = async (req, res) => {
   try {
-    const options = [
-      {
-        id: 1,
-        name: "Individual - 1 Month",
-        duration: 1,
-        basePrice: 4000,
-        features: ["Access to gym equipment", "Basic fitness classes", "Locker access"],
-        description: "Perfect for trying out our facilities"
-      },
-      {
-        id: 2,
-        name: "Individual - 3 Month",
-        duration: 3,
-        basePrice: 4000,
-        totalPrice: 10680,
-        discount: 10,
-        features: ["Access to gym equipment", "All fitness classes", "Locker access", "2 guest passes"],
-        description: "Great value for regular gym-goers"
-      },
-      {
-        id: 3,
-        name: "Individual - 6 Month",
-        duration: 6,
-        basePrice: 4000,
-        totalPrice: 20400,
-        discount: 15,
-        features: ["Access to gym equipment", "All fitness classes", "Locker access", "5 guest passes", "Priority booking"],
-        description: "Best value for committed fitness enthusiasts"
-      },
-      {
-        id: 4,
-        name: "Group Package - 3 Month",
-        duration: 3,
-        basePrice: 4000,
-        totalPrice: 12000,
-        features: ["Group training sessions", "Community events", "Locker access", "3 guest passes"],
-        description: "Perfect for training with friends"
-      },
-      {
-        id: 5,
-        name: "Premium - 12 Month",
-        duration: 12,
-        basePrice: 4000,
-        totalPrice: 43200,
-        discount: 20,
-        features: ["Personal trainer sessions", "Nutrition consultation", "Premium equipment access", "Unlimited guest passes"],
-        description: "Ultimate fitness experience"
-      }
-    ];
+    const memberships = await Membership.findAll({
+      where: { is_active: true },
+      order: [['price', 'ASC']]
+    });
+
+    const options = memberships.map(m => ({
+      id: m.id,
+      name: m.name,
+      duration: m.duration_months,
+      basePrice: Number(m.price),
+      totalPrice: Number(m.price),
+      features: m.features,
+      description: m.description,
+      category: m.category
+    }));
 
     res.json(options);
   } catch (error) {
@@ -187,14 +153,15 @@ export const getSubscriptionOptions = async (req, res) => {
 // Create Subscription
 export const createSubscription = async (req, res) => {
   try {
-    const { user_id, membership_id, start_date, end_date, status, auto_renew, membership_type, price } = req.body;
-    
+    const { user_id, membership_id, start_date, end_date, status, auto_renew, membership_type, price, trainer_id } = req.body;
+
     const startDate = new Date(start_date);
     const endDate = new Date(end_date);
-    
+
     const newSubscription = await Subscription.create({
       user_id: user_id,
-      membership_id: membership_id || req.body.membership_id,
+      membership_id: membership_id,
+      trainer_id: trainer_id || null,
       start_date: startDate,
       end_date: endDate,
       status: status || 'active',
@@ -203,7 +170,7 @@ export const createSubscription = async (req, res) => {
       payment_status: 'pending',
       membership_type: membership_type
     });
-    
+
     res.status(201).json({
       message: 'Subscription created successfully',
       subscription: newSubscription

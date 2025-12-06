@@ -1,0 +1,11 @@
+
+> fitnesspro@0.0.0 lint
+> eslint .
+
+
+C:\Users\wendi\PROJECTS\Fitness\frontend\src\pages\dashboard\SubscriptionPage.jsx
+   9:8   error  'pricingData' is defined but never used. Allowed unused vars must match /^[A-Z_]/u  no-unused-vars
+  10:10  error  'motion' is defined but never used. Allowed unused vars must match /^[A-Z_]/u       no-unused-vars
+
+✖ 2 problems (2 errors, 0 warnings)
+

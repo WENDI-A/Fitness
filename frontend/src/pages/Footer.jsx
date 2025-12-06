@@ -1,101 +1,92 @@
 import React from "react";
-import {FaMapMarkerAlt} from "react-icons/fa";
-import {FaPhoneAlt} from "react-icons/fa";
-import {FaEnvelope} from "react-icons/fa";
-import {FaClock} from "react-icons/fa";
-import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
-
-
+import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope, FaClock, FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 
 const Footer = () => {
-    return (
-    <footer className="bg-white text-gray-800 dark:bg-gray-900 dark:text-white py-8">
-        <div className="max-w-6xl mx-auto px-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-                  <div>
-                      <h1 className="font-bold mb-4">Latest Fitness</h1>
-          <p className="text-gray-600 dark:text-gray-300">Elevating fitness in Hawassa with top-tier equipment and exceptional service.</p>
-                      <div className="flex space-x-4 mt-6">
-  <a href="https://facebook.com" target="_blank" rel="noopener noreferrer">
-    <FaFacebookF size={20} className="hover:text-orange-600" />
-  </a>
-  <a href="https://instagram.com" target="_blank" rel="noopener noreferrer">
-    <FaInstagram size={20} className="hover:text-orange-600" />
-  </a>
-  <a href="https://twitter.com" target="_blank" rel="noopener noreferrer">
-    <FaTwitter size={20} className="hover:text-orange-600" />
-  </a>
-  <a href="https://youtube.com" target="_blank" rel="noopener noreferrer">
-    <FaYoutube size={20} className="hover:text-orange-600" />
-  </a>
-</div>
-
-                </div>
-
-                  <div>
-                    <h1 className="font-bold mb-4">Quick Links</h1>
-                    <a href="#home" className="block hover:underline">HOME</a>
-                    <a href="#about" className="block hover:underline">About Us</a>
-                    <a href="#services" className="block hover:underline">Service</a>
-                    <a href="#team" className="block hover:underline">Our Team</a>
-                    <a href="#testimonials" className="block hover:underline">Testimonials</a>
-                    <a href="#contact" className="block hover:underline">Contact</a>
-                </div>
-                    <div>
-                    <h1 className="font-bold mb-4">Programs</h1>
-                    <a href="#home" className="block hover:underline">Personal Training</a>
-                    <a href="#about" className="block hover:underline">Group Class</a>
-                    <a href="#services" className="block hover:underline">Nutrition Coaching</a>
-                    <a href="#team" className="block hover:underline">Strength Training</a>
-                    <a href="#testimonials" className="block hover:underline">Cardio Programs</a>
-                    <a href="#contact" className="block hover:underline">Recovery & Wellness</a>
-                </div>
-                    <div>
-  <h1 className="font-bold mb-4">Contact Us</h1>
-
-  <div className="flex items-start gap-4 mt-4">
-    <div className="bg-red-600 p-3 rounded-full">
-      <FaMapMarkerAlt size={10} />
-    </div>
-    <div>
-      <h4 className="font-bold">Location</h4>
-      <p>Hawassa city 05, main road<br />Hawassa, Ethiopia</p>
-    </div>
-  </div>
-
-  <div className="flex items-start gap-4 mt-4">
-    <div className="bg-orange-600 p-3 rounded-full">
-      <FaPhoneAlt size={10} />
-    </div>
-    <div>
-      <h4 className="font-bold">Phone</h4>
-      <p>0722072324</p>
-    </div>
-  </div>
-
-  <div className="flex items-start gap-4 mt-4">
-    <div className="bg-red-600 p-3 rounded-full">
-      <FaEnvelope size={10} />
-    </div>
-    <div>
-      <h4 className="font-bold">Email</h4>
-      <p>oKtLb@example.com</p>
-    </div>
-  </div>
-
-  <div className="flex items-start gap-4 mt-4">
-    <div className="bg-red-500 p-3 rounded-full">
-      <FaClock size={10} />
-    </div>
-    <div>
-      <h4 className="font-bold">Hours</h4>
-      <p>Gym: 6:00 AM - 10:00 PM Daily<br />Spa: 10:00 AM - 8:00 PM Daily</p>
-    </div>
-  </div>
-</div>
-
+  return (
+    <footer className="bg-gray-900 text-white pt-16 pb-8 border-t border-gray-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-12">
+          {/* Brand Section */}
+          <div className="space-y-6">
+            <h1 className="text-2xl font-extrabold tracking-tight">
+              Fitness<span className="text-red-600">Pro</span>
+            </h1>
+            <p className="text-gray-400 leading-relaxed">
+              Elevating fitness in Hawassa with top-tier equipment, expert trainers, and exceptional service. Join us to transform your life.
+            </p>
+            <div className="flex space-x-4">
+              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-all duration-300">
+                <FaFacebookF size={18} />
+              </a>
+              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-all duration-300">
+                <FaInstagram size={18} />
+              </a>
+              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-all duration-300">
+                <FaTwitter size={18} />
+              </a>
+              <a href="https://youtube.com" target="_blank" rel="noopener noreferrer" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 hover:text-white transition-all duration-300">
+                <FaYoutube size={18} />
+              </a>
             </div>
-        </footer>
-    );
-}
+          </div>
 
-export default Footer
+          {/* Quick Links */}
+          <div>
+            <h3 className="text-lg font-bold mb-6 border-b border-gray-800 pb-2 inline-block">Quick Links</h3>
+            <ul className="space-y-3">
+              <li><a href="#home" className="text-gray-400 hover:text-red-500 transition-colors">Home</a></li>
+              <li><a href="#about" className="text-gray-400 hover:text-red-500 transition-colors">About Us</a></li>
+              <li><a href="#services" className="text-gray-400 hover:text-red-500 transition-colors">Services</a></li>
+              <li><a href="#testimonials" className="text-gray-400 hover:text-red-500 transition-colors">Testimonials</a></li>
+              <li><a href="#contact" className="text-gray-400 hover:text-red-500 transition-colors">Contact</a></li>
+            </ul>
+          </div>
+
+          {/* Programs */}
+          <div>
+            <h3 className="text-lg font-bold mb-6 border-b border-gray-800 pb-2 inline-block">Programs</h3>
+            <ul className="space-y-3">
+              <li className="text-gray-400">Personal Training</li>
+              <li className="text-gray-400">Group Classes</li>
+              <li className="text-gray-400">Nutrition Coaching</li>
+              <li className="text-gray-400">Strength Training</li>
+              <li className="text-gray-400">Cardio Programs</li>
+              <li className="text-gray-400">Recovery & Wellness</li>
+            </ul>
+          </div>
+
+          {/* Contact Info */}
+          <div>
+            <h3 className="text-lg font-bold mb-6 border-b border-gray-800 pb-2 inline-block">Contact Us</h3>
+            <div className="space-y-4">
+              <div className="flex items-start gap-3">
+                <FaMapMarkerAlt className="text-red-600 mt-1 flex-shrink-0" />
+                <p className="text-gray-400 text-sm">Hawassa city 05, main road<br />Hawassa, Ethiopia</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <FaPhoneAlt className="text-red-600 flex-shrink-0" />
+                <p className="text-gray-400 text-sm">+251 97 906 2454</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <FaEnvelope className="text-red-600 flex-shrink-0" />
+                <p className="text-gray-400 text-sm">info@fitnesspro.com</p>
+              </div>
+              <div className="flex items-start gap-3">
+                <FaClock className="text-red-600 mt-1 flex-shrink-0" />
+                <p className="text-gray-400 text-sm">Daily: 6:00 AM - 10:00 PM</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-gray-800 pt-8 text-center">
+          <p className="text-gray-500 text-sm">
+            &copy; {new Date().getFullYear()} FitnessPro. All rights reserved.
+          </p>
+        </div>
+      </div>
+    </footer>
+  );
+};
+
+export default Footer;

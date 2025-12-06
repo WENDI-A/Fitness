@@ -1,22 +1,22 @@
-import React, { useState, useEffect } from "react";
-import { FaIdCard, FaCalendarAlt, FaCrown, FaSync, FaHistory, FaGift, FaPlus, FaUser, FaStar, FaCheck } from "react-icons/fa";
+import React, { useState, useEffect, useCallback } from "react";
+import { FaIdCard, FaCalendarAlt, FaCrown, FaSync, FaHistory, FaGift, FaPlus, FaUser, FaStar, FaCheck, FaExclamationCircle } from "react-icons/fa";
 import {
   getUserSubscription,
-  getSubscriptionHistory,
-  getAvailableUpgrades,
   createSubscription,
   getSubscriptionOptions,
 } from "../../services/api/subscriptionApi";
 import { getAllTrainers } from "../../services/api/trainerApi";
-import pricingData from "../../component/pricingData";
+
+import { motion, AnimatePresence } from "framer-motion"; // eslint-disable-line no-unused-vars
 
 const SubscriptionPage = ({ user }) => {
   const [loading, setLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [subscriptionOptions, setSubscriptionOptions] = useState([]);
   const [selectedOption, setSelectedOption] = useState(null);
-  const [_subscriptionHistory, setSubscriptionHistory] = useState([]);
-  const [_availableUpgrades, setAvailableUpgrades] = useState([]);
+
+  // const [_subscriptionHistory, setSubscriptionHistory] = useState([]);
+  // const [_availableUpgrades, setAvailableUpgrades] = useState([]);
   const [trainers, setTrainers] = useState([]);
   const [selectedTrainer, setSelectedTrainer] = useState(null);
   const [showTrainerSelection, setShowTrainerSelection] = useState(false);
@@ -27,56 +27,45 @@ const SubscriptionPage = ({ user }) => {
     trainerId: null
   });
   const [subscription, setSubscription] = useState(null);
-   
-  
+  const [error, setError] = useState(null);
 
-  
-  const fetchAllUserData = React.useCallback(async () => {
+  const fetchAllUserData = useCallback(async () => {
+    if (!user?.id) return;
+
     try {
       setLoading(true);
-      const [sub, history, upgrades, options, trainersData] = await Promise.all([
-        getUserSubscription(user?.id),
-        // getSubscriptionHistory(user?.id),
-        // getAvailableUpgrades(user?.id),
-        getSubscriptionOptions(),
-        getAllTrainers()
-      ]);
-  
-      setSubscription(sub?.length ? sub[0] : null);
-     
-      
-      setSubscriptionOptions(options || []);
-      // If backend didn't return subscription options, fall back to local pricingData
-      if ((!options || options.length === 0) && pricingData && pricingData.length) {
-    // Assign numeric IDs to fallback pricing options so they can be used as membership_id when sent to backend.
-    // We use a high offset to reduce the chance of colliding with real DB ids.
-    const PRICING_ID_OFFSET = 100000;
-          const mapped = pricingData.map((p, i) => {
-            const priceStr = (p.menPrice || p.price || '').toString();
-            const priceNum = Number(priceStr.replace(/[^0-9.-]+/g, '')) || 0;
-            const durationMonths = Math.max(1, Math.round((p.validity || 30) / 30));
-            return {
-              id: i + 1,
-              membershipId: i + 1,
-              name: p.title,
-              duration: durationMonths,
-              basePrice: priceNum,
-              totalPrice: priceNum,
-              features: p.features || [],
-              raw: p,
-            };
-          });
-          setSubscriptionOptions(mapped);
-          if (!selectedOption && mapped.length) {
-            setSelectedOption(mapped[0]);
-            setNewSubscription({
-              membershipType: mapped[0].name,
-              duration: mapped[0].duration,
-              autoRenew: false,
-            });
-          }
+      setError(null);
+
+      // Fetch subscription options first to ensure we have them
+      let options = [];
+      try {
+        options = await getSubscriptionOptions();
+      } catch (err) {
+        console.warn("Failed to fetch subscription options, using fallback", err);
       }
-      setTrainers(trainersData?.length ? trainersData : [
+
+      // Fallback removed to ensure only DB memberships are used
+      if (!options || options.length === 0) {
+        console.warn("No subscription options available from API.");
+      }
+
+      setSubscriptionOptions(options);
+
+      // Fetch other data in parallel
+      const [sub, trainersData] = await Promise.all([
+        getUserSubscription(user.id).catch(err => {
+          console.error("Error fetching user subscription:", err);
+          return [];
+        }),
+        getAllTrainers().catch(err => {
+          console.error("Error fetching trainers:", err);
+          return [];
+        })
+      ]);
+
+      setSubscription(sub?.length ? sub[0] : null);
+
+      const defaultTrainers = [
         {
           id: 1,
           name: "Sarah Johnson",
@@ -110,552 +99,456 @@ const SubscriptionPage = ({ user }) => {
           certifications: ["CSCS", "Powerlifting Coach", "Sports Nutrition"],
           availability: ["Monday", "Tuesday", "Thursday", "Friday"]
         }
-      ]);
-      
-      // Set default selected option
-      if (options?.length && !selectedOption) {
-        setSelectedOption(options[0]);
-        setNewSubscription({
-          membershipType: options[0].name,
-          duration: options[0].duration,
-          autoRenew: false
-        });
-      }
+      ];
+
+      setTrainers(trainersData?.length ? trainersData : defaultTrainers);
+
     } catch (error) {
       console.error("Error fetching user data:", error);
-      // Set fallback data on error
-      setSubscriptionHistory([]);
-      setAvailableUpgrades([]);
-      setSubscriptionOptions([]);
-      setTrainers([]);
+      setError("Failed to load subscription data. Please try again later.");
     } finally {
       setLoading(false);
     }
-  }, [user?.id, selectedOption]);
+  }, [user?.id]);
 
   useEffect(() => {
-    if (user?.id) {
-      fetchAllUserData();
+    fetchAllUserData();
+  }, [fetchAllUserData]);
+
+  // Initialize selected option when options are loaded
+  useEffect(() => {
+    if (subscriptionOptions.length > 0 && !selectedOption) {
+      const defaultOption = subscriptionOptions[0];
+      setSelectedOption(defaultOption);
+      setNewSubscription(prev => ({
+        ...prev,
+        membershipType: defaultOption.name,
+        duration: defaultOption.duration,
+      }));
     }
-  }, [user?.id, fetchAllUserData]);
+  }, [subscriptionOptions, selectedOption]);
 
   // Handle subscription option selection
   const handleOptionSelect = (option) => {
     setSelectedOption(option);
-    setNewSubscription({
+    setNewSubscription(prev => ({
+      ...prev,
       membershipType: option.name,
       duration: option.duration,
-      autoRenew: newSubscription.autoRenew,
-      trainerId: newSubscription.trainerId
-    });
-  };
-
-  // If a real membership id (numeric) is selected, create subscription immediately
-  const maybeCreateSubscriptionForMembership = async (option) => {
-    // numeric id indicates existing membership record
-    const membershipId = option?.id;
-    if (!membershipId) return;
-    // if id is numeric or string numeric, proceed
-    if (/^\d+$/.test(String(membershipId))) {
-      try {
-        setLoading(true);
-        const price = option.totalPrice || option.basePrice * option.duration || 0;
-        await createSubscription({
-          user_id: user?.id || 1,
-          membership_id: Number(membershipId),
-          start_date: new Date().toISOString().split('T')[0],
-          end_date: new Date(Date.now() + (option.duration || 1) * 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          status: 'active',
-          auto_renew: false,
-          membership_type: option.name,
-          price: price,
-        });
-        // Refresh user data
-        await fetchAllUserData();
-        alert('Subscription created from selected membership');
-      } catch (err) {
-        console.error('Auto-create subscription failed', err);
-        alert('Failed to create subscription for selected membership');
-      } finally {
-        setLoading(false);
-      }
-    }
+    }));
   };
 
   // Handle trainer selection
   const handleTrainerSelect = (trainer) => {
     setSelectedTrainer(trainer);
-    setNewSubscription({
-      ...newSubscription,
+    setNewSubscription(prev => ({
+      ...prev,
       trainerId: trainer.id
-    });
+    }));
     setShowTrainerSelection(false);
   };
 
   // Render star rating
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, i) => (
-      <FaStar
-        key={i}
-        className={`w-3 h-3 ${i < Math.floor(rating) ? "text-yellow-400" : "text-gray-300"}`}
-      />
-    ));
-  };
+  // const renderStars = (rating) => {
+  //   return Array.from({ length: 5 }, (_, i) => (
+  //     <FaStar
+  //       key={i}
+  //       className={`w-3 h-3 ${i < Math.floor(rating) ? "text-yellow-400" : "text-gray-300"}`}
+  //     />
+  //   ));
+  // };
 
   // Calculate pricing based on selected option
   const calculatePrice = () => {
     if (!selectedOption) return 0;
     return selectedOption.totalPrice || (selectedOption.basePrice * selectedOption.duration);
   };
-  
+
   const handleCreateSubscription = async (e) => {
     e.preventDefault();
-    // Validate selection before sending to backend: accept only positive integer ids
-    if (!/^\d+$/.test(String(selectedOption?.id || ''))){
-      alert("Select a valid membership");
-      return;
-    }
+    if (!selectedOption) return;
 
     try {
       setLoading(true);
       const price = calculatePrice();
+
       await createSubscription({
         user_id: user?.id || 1,
-        membership_id: Number(selectedOption?.id),
+        membership_id: Number(selectedOption.id),
         start_date: new Date().toISOString().split('T')[0],
-        end_date: new Date(Date.now() + newSubscription.duration * 30 * 24 * 60 * 60 * 1000)
+        end_date: new Date(Date.now() + (newSubscription.duration || 1) * 30 * 24 * 60 * 60 * 1000)
           .toISOString().split('T')[0],
         status: 'active',
         auto_renew: newSubscription.autoRenew,
-        membership_type: selectedOption?.name || newSubscription.membershipType,
+        membership_type: selectedOption.name,
         price: price,
         trainer_id: selectedTrainer?.id || null
       });
+
       // Reset form and close modal
       setNewSubscription({ membershipType: '', duration: 1, autoRenew: false, trainerId: null });
-      setSelectedOption(subscriptionOptions[0] || null);
       setSelectedTrainer(null);
       setShowCreateForm(false);
-      
+
       // Re-fetch user data to update the UI
       await fetchAllUserData();
+      // Ideally show a toast notification here instead of alert
       alert("Subscription created successfully!");
     } catch (error) {
       console.error('Error creating subscription:', error);
-      alert("Failed to create subscription");
+      alert("Failed to create subscription. Please try again.");
     } finally {
       setLoading(false);
     }
   };
-  
 
+  // const getStatusColor = (status) => {
+  //   switch (status?.toLowerCase()) {
+  //     case "active": return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+  //     case "expired": return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+  //     case "cancelled": return "bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300";
+  //     default: return "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400";
+  //   }
+  // };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "active": return "bg-green-100 text-green-800";
-      case "expired": return "bg-red-100 text-red-800";
-      case "cancelled": return "bg-gray-100 text-gray-800";
-      default: return "bg-yellow-100 text-yellow-800";
-    }
-  };
+  // const getDaysRemainingColor = (days) => {
+  //   if (days > 30) return "text-green-600 dark:text-green-400";
+  //   if (days > 7) return "text-yellow-600 dark:text-yellow-400";
+  //   return "text-red-600 dark:text-red-400";
+  // };
 
-  const getDaysRemainingColor = (days) => {
-    if (days > 30) return "text-green-600";
-    if (days > 7) return "text-yellow-600";
-    return "text-red-600";
-  };
+  if (loading && !subscription && !subscriptionOptions.length) {
+    return (
+      <div className="space-y-6 animate-pulse">
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-1/4"></div>
+        <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+        <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded-xl"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">My Subscription</h1>
-          <p className="text-gray-600">Manage your membership and billing</p>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">My Subscription</h1>
+          <p className="text-gray-500 dark:text-gray-400">Manage your membership plan and billing details</p>
         </div>
         <button
           onClick={() => setShowCreateForm(true)}
-          className="flex items-center space-x-2 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+          className="flex items-center space-x-2 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30 active:scale-95"
         >
           <FaPlus className="w-4 h-4" />
           <span>New Subscription</span>
         </button>
       </div>
 
-      {/* Loading State */}
-      {loading && !subscription && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <div className="animate-pulse">
-            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
-            <div className="h-8 bg-gray-200 rounded w-1/2"></div>
-          </div>
+      {error && (
+        <div className="p-4 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 rounded-xl flex items-center gap-3">
+          <FaExclamationCircle />
+          <p>{error}</p>
         </div>
       )}
-      
+
       {/* Current Subscription Card */}
-      {subscription && (
-      <div className="bg-gradient-to-r from-red-500 to-orange-500 rounded-xl p-6 text-white">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <FaCrown className="w-8 h-8" />
-            <div>
-              <h2 className="text-2xl font-bold">{subscription?.membershipType || 'No Membership'}</h2>
-              <p className="text-red-100">Active Membership</p>
-            </div>
-          </div>
-          <div className="text-right">
-            <p className="text-3xl font-bold">{subscription?.daysRemaining || 0}</p>
-            <p className="text-red-100">days remaining</p>
-          </div>
-        </div>
-        
-        {/* Selected Trainer Section */}
-        {subscription?.selectedTrainer && (
-          <div className="bg-white bg-opacity-20 rounded-lg p-4 mb-4">
-            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 bg-white bg-opacity-30 rounded-full flex items-center justify-center">
-                <FaUser className="w-6 h-6 text-white" />
-              </div>
-              <div>
-                <h4 className="font-semibold text-lg">Your Personal Trainer</h4>
-                <p className="text-red-100">{subscription.selectedTrainer.first_name} {subscription.selectedTrainer.last_name}</p>
-                <p className="text-red-200 text-sm">{subscription.selectedTrainer.specialization?.join(', ') || 'Fitness Specialist'}</p>
-              </div>
-              <div className="ml-auto text-right">
-                <div className="flex items-center space-x-1">
-                  {[...Array(5)].map((_, i) => (
-                    <FaStar 
-                      key={i} 
-                      className={i < Math.floor(subscription.selectedTrainer.rating || 4.8) ? "text-yellow-300" : "text-white text-opacity-30"} 
-                      size={14} 
-                    />
-                  ))}
+      {subscription ? (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-gray-900 to-gray-800 dark:from-black dark:to-gray-900 rounded-2xl p-6 md:p-8 text-white shadow-xl relative overflow-hidden"
+        >
+          {/* Background decoration */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-red-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3"></div>
+
+          <div className="relative z-10">
+            <div className="flex flex-col md:flex-row justify-between gap-6 mb-8">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-red-500/20 rounded-xl backdrop-blur-sm">
+                  <FaCrown className="w-8 h-8 text-red-500" />
                 </div>
-                <p className="text-red-100 text-sm">{subscription.selectedTrainer.rating || 4.8} rating</p>
+                <div>
+                  <h2 className="text-3xl font-bold mb-1">{subscription.membershipType || 'Active Membership'}</h2>
+                  <div className="flex items-center gap-2">
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-green-500/20 text-green-400 border border-green-500/30`}>
+                      Active
+                    </span>
+                    <span className="text-gray-400 text-sm">ID: #{subscription.id?.toString().padStart(6, '0')}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="text-left md:text-right">
+                <p className="text-gray-400 text-sm mb-1">Time Remaining</p>
+                <p className="text-4xl font-bold tracking-tight">{subscription.daysRemaining || 0}</p>
+                <p className="text-gray-400 text-sm">days left</p>
               </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Start Date</p>
+                <p className="font-semibold text-lg">{subscription.startDate ? new Date(subscription.startDate).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">End Date</p>
+                <p className="font-semibold text-lg">{subscription.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10">
+                <p className="text-gray-400 text-xs uppercase tracking-wider mb-1">Plan Value</p>
+                <p className="font-semibold text-lg">{subscription.price?.toLocaleString() || '0'} {subscription.currency || 'ETB'}</p>
+              </div>
+            </div>
+
+            {/* Selected Trainer Section */}
+            {subscription.selectedTrainer && (
+              <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 flex items-center gap-4">
+                <div className="w-12 h-12 bg-gray-700 rounded-full flex items-center justify-center overflow-hidden">
+                  <FaUser className="w-6 h-6 text-gray-400" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-gray-400 text-xs uppercase tracking-wider">Personal Trainer</p>
+                  <h4 className="font-semibold text-lg">{subscription.selectedTrainer.first_name} {subscription.selectedTrainer.last_name}</h4>
+                  <p className="text-gray-400 text-sm">{subscription.selectedTrainer.specialization?.join(', ')}</p>
+                </div>
+              </div>
+            )}
           </div>
-        )}
-        
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-white bg-opacity-20 rounded-lg p-4">
-            <p className="text-red-100 dark:text-gray-300 text-sm">Start Date</p>
-            <p className="font-semibold">{subscription?.startDate ? new Date(subscription.startDate).toLocaleDateString() : 'N/A'}</p>
+        </motion.div>
+      ) : (
+        <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 text-center border border-gray-200 dark:border-gray-700 shadow-sm">
+          <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
+            <FaIdCard className="w-8 h-8 text-gray-400" />
           </div>
-          <div className="bg-white bg-opacity-20 rounded-lg p-4">
-            <p className="text-red-100 dark:text-gray-300 text-sm">End Date</p>
-            <p className="font-semibold">{subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}</p>
-          </div>
-          <div className="bg-white bg-opacity-20 rounded-lg p-4">
-            <p className="text-red-100 dark:text-gray-300 text-sm">Total Cost</p>
-            <p className="font-semibold">{subscription?.price?.toLocaleString() || 'N/A'} {subscription?.currency || ''}</p>
-          </div>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-2">No Active Subscription</h3>
+          <p className="text-gray-500 dark:text-gray-400 mb-6 max-w-md mx-auto">You don't have an active membership plan. Choose a plan to get started with your fitness journey.</p>
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all shadow-lg hover:shadow-red-500/30"
+          >
+            Choose a Plan
+          </button>
         </div>
-      </div>
       )}
-
-      
-
-      {/* Membership Features */}
-      {subscription?.selectedMembership && (
-        <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-          <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Membership Features</h3>
-          
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {subscription.selectedMembership.features?.map((feature, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <FaCheck className="w-4 h-4 text-green-500" />
-                <span className="text-gray-700 dark:text-gray-300">{feature}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-      
-      {/* Subscription Details */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700">
-        <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-4">Subscription Details</h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-600">
-              <span className="text-gray-600 dark:text-gray-300">Membership ID</span>
-              <span className="font-medium text-gray-800 dark:text-white">#{subscription?.id?.toString().padStart(6, '0') || 'N/A'}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-600">
-              <span className="text-gray-600 dark:text-gray-300">Status</span>
-              <span className={`px-2 py-1 rounded-full text-xs font-medium ${getStatusColor(subscription?.status)}`}>
-                {subscription?.status?.charAt(0).toUpperCase() + subscription?.status?.slice(1) || 'Unknown'}
-              </span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100 dark:border-gray-600">
-              <span className="text-gray-600 dark:text-gray-300">Total Amount</span>
-              <span className="font-medium text-gray-800 dark:text-white">{subscription?.price?.toLocaleString() || 'N/A'} {subscription?.currency || ''}</span>
-            </div>
-          </div>
-          
-          <div className="space-y-4">
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Auto Renewal</span>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  checked={subscription?.autoRenew || false}
-                  onChange={() => setSubscription({...subscription, autoRenew: !subscription?.autoRenew})}
-                  className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
-                />
-                <span className="text-sm text-gray-600">
-                  {subscription?.autoRenew ? "Enabled" : "Disabled"}
-                </span>
-              </div>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Next Billing</span>
-              <span className="font-medium text-gray-800">{subscription?.endDate ? new Date(subscription.endDate).toLocaleDateString() : 'N/A'}</span>
-            </div>
-            <div className="flex justify-between items-center py-2 border-b border-gray-100">
-              <span className="text-gray-600">Days Remaining</span>
-              <span className={`font-medium ${getDaysRemainingColor(subscription?.daysRemaining)}`}>
-                {subscription?.daysRemaining || 0} days
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Available Upgrades */}
-       
-
-      {/* Subscription History */}
-       
 
       {/* Create Subscription Modal */}
-      {showCreateForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl w-full max-w-md mx-4 max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="p-4 border-b dark:border-gray-700 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-0">Create New Subscription</h3>
-              <button
-                onClick={() => setShowCreateForm(false)}
-                aria-label="Close create subscription"
-                className="text-gray-500 hover:text-gray-700 dark:text-gray-300 dark:hover:text-white"
-              >
-                ✕
-              </button>
-            </div>
-
-            <form id="createSubscriptionForm" onSubmit={handleCreateSubscription} className="space-y-4 p-4 overflow-y-auto flex-1">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Membership Type</label>
-                <select
-                  value={String(selectedOption?.id ?? '')}
-                  onChange={(e) => {
-                    const option = subscriptionOptions.find(opt => String(opt.id) === e.target.value);
-                    if (option) {
-                      handleOptionSelect(option);
-                    }
-                  }}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+      <AnimatePresence>
+        {showCreateForm && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl"
+            >
+              <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">Create New Subscription</h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">Select a plan that fits your goals</p>
+                </div>
+                <button
+                  onClick={() => setShowCreateForm(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 >
-                  {subscriptionOptions.map(option => (
-                    <option key={option.id} value={String(option.id)}>
-                      {option.name} ({(option.totalPrice || option.basePrice * option.duration).toLocaleString()} ETB)
-                    </option>
-                  ))}
-                </select>
+                  <FaTimes className="w-5 h-5 text-gray-500" />
+                </button>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Duration</label>
-                <input
-                  type="text"
-                  value={`${selectedOption?.duration || newSubscription.duration} month${(selectedOption?.duration || newSubscription.duration) > 1 ? 's' : ''}`}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
-                />
-              </div>
+              <div className="flex-1 overflow-y-auto p-6 space-y-8">
+                {/* Plan Selection */}
+                <section>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">1. Choose Membership</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {subscriptionOptions.map(option => (
+                      <button
+                        key={option.id}
+                        onClick={() => handleOptionSelect(option)}
+                        className={`relative p-4 rounded-xl border-2 text-left transition-all ${String(selectedOption?.id) === String(option.id)
+                          ? 'border-red-500 bg-red-50 dark:bg-red-900/10'
+                          : 'border-gray-200 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-900/30'
+                          }`}
+                      >
+                        {String(selectedOption?.id) === String(option.id) && (
+                          <div className="absolute top-3 right-3 text-red-500">
+                            <FaCheck className="w-4 h-4" />
+                          </div>
+                        )}
+                        <h5 className="font-bold text-gray-900 dark:text-white mb-1">{option.name}</h5>
+                        <p className="text-2xl font-bold text-red-600 dark:text-red-400 mb-2">
+                          {(option.totalPrice || option.basePrice * option.duration).toLocaleString()} ETB
+                        </p>
+                        <p className="text-xs text-gray-500 dark:text-gray-400">Duration: {option.duration} Month(s)</p>
+                      </button>
+                    ))}
+                  </div>
+                </section>
 
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Price</label>
-                <input
-                  type="text"
-                  value={`${calculatePrice().toLocaleString()} ETB`}
-                  readOnly
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700 text-gray-600 dark:text-gray-300 font-semibold"
-                />
-              </div>
+                {/* Trainer Selection */}
+                <section>
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">2. Personal Trainer (Optional)</h4>
 
-              {/* Trainer Selection */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Personal Trainer (Optional)</label>
-                <div className="space-y-2">
                   {selectedTrainer ? (
-                    <div className="flex items-center justify-between p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-700">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-full flex items-center justify-center">
-                          <FaUser className="w-5 h-5 text-gray-400" />
+                    <div className="flex items-center justify-between p-4 border border-red-200 dark:border-red-900/30 bg-red-50 dark:bg-red-900/10 rounded-xl">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center">
+                          <FaUser className="w-6 h-6 text-red-600 dark:text-red-400" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-800 dark:text-white">{selectedTrainer.name}</p>
-                          <div className="flex items-center space-x-1">
-                            {renderStars(selectedTrainer.rating)}
-                            <span className="text-xs text-gray-500 ml-1">({selectedTrainer.rating})</span>
+                          <p className="font-bold text-gray-900 dark:text-white">{selectedTrainer.name}</p>
+                          <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-300">
+                            <FaStar className="text-yellow-400 w-3 h-3" />
+                            <span>{selectedTrainer.rating}</span>
+                            <span className="text-gray-400">•</span>
+                            <span>{selectedTrainer.specialization?.[0]}</span>
                           </div>
                         </div>
                       </div>
                       <button
-                        type="button"
-                        onClick={() => {setSelectedTrainer(null); setNewSubscription({...newSubscription, trainerId: null});}}
-                        className="text-red-500 hover:text-red-700"
+                        onClick={() => { setSelectedTrainer(null); setNewSubscription(prev => ({ ...prev, trainerId: null })); }}
+                        className="text-sm text-red-600 hover:text-red-700 font-medium px-3 py-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-lg transition-colors"
                       >
                         Remove
                       </button>
                     </div>
                   ) : (
                     <button
-                      type="button"
                       onClick={() => setShowTrainerSelection(true)}
-                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                      className="w-full p-4 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl text-gray-500 dark:text-gray-400 hover:border-red-500 hover:text-red-500 transition-all flex items-center justify-center gap-2 group"
                     >
-                      + Select a Personal Trainer
+                      <FaPlus className="group-hover:scale-110 transition-transform" />
+                      <span>Add a Personal Trainer</span>
                     </button>
                   )}
-                </div>
-              </div>
+                </section>
 
-              {/* Features included */}
-              {selectedOption?.features && (
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Features Included</label>
-                  <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3">
-                    <ul className="space-y-1">
-                      {selectedOption.features.map((feature, index) => (
-                        <li key={index} className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
-                          <span className="w-1 h-1 bg-red-500 rounded-full"></span>
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
+                {/* Summary */}
+                <section className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-6">
+                  <h4 className="text-sm font-semibold text-gray-900 dark:text-white uppercase tracking-wider mb-4">Summary</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between text-gray-600 dark:text-gray-300">
+                      <span>Membership ({selectedOption?.name || 'Select a plan'})</span>
+                      <span>{calculatePrice().toLocaleString()} ETB</span>
+                    </div>
+                    {selectedTrainer && (
+                      <div className="flex justify-between text-gray-600 dark:text-gray-300">
+                        <span>Personal Trainer</span>
+                        <span>Included in plan</span>
+                      </div>
+                    )}
+                    <div className="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                      <span className="font-bold text-gray-900 dark:text-white text-lg">Total</span>
+                      <span className="font-bold text-red-600 dark:text-red-400 text-xl">{calculatePrice().toLocaleString()} ETB</span>
+                    </div>
                   </div>
-                </div>
-              )}
-
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="autoRenew"
-                  checked={newSubscription.autoRenew}
-                  onChange={(e) => setNewSubscription({...newSubscription, autoRenew: e.target.checked})}
-                  className="w-4 h-4 text-red-600 bg-gray-100 border-gray-300 rounded focus:ring-red-500"
-                />
-                <label htmlFor="autoRenew" className="text-sm text-gray-700 dark:text-gray-300">
-                  Enable auto-renewal
-                </label>
+                </section>
               </div>
 
-            </form>
-
-            <div className="p-4 border-t dark:border-gray-700 flex space-x-4">
-              <button
-                type="button"
-                onClick={() => document.getElementById('createSubscriptionForm')?.requestSubmit()}
-                disabled={loading}
-                className="flex-1 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-              >
-                {loading ? "Creating..." : "Create Subscription"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                className="flex-1 px-4 py-2 bg-gray-200 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors"
-              >
-                Cancel
-              </button>
-            </div>
+              <div className="p-6 border-t border-gray-100 dark:border-gray-700 bg-gray-50/50 dark:bg-gray-800/50 flex gap-4">
+                <button
+                  onClick={() => setShowCreateForm(false)}
+                  className="flex-1 px-6 py-3 bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleCreateSubscription}
+                  disabled={loading || !selectedOption}
+                  className="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-colors font-medium shadow-lg hover:shadow-red-500/30 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                >
+                  {loading ? (
+                    <>
+                      <FaSync className="animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <span>Confirm Subscription</span>
+                  )}
+                </button>
+              </div>
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
 
       {/* Trainer Selection Modal */}
-      {showTrainerSelection && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-xl p-6 w-full max-w-4xl mx-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-gray-800 dark:text-white">Select a Personal Trainer</h3>
-              <button
-                onClick={() => setShowTrainerSelection(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-              >
-                ✕
-              </button>
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {trainers.map((trainer) => (
-                <div
-                  key={trainer.id}
-                  onClick={() => handleTrainerSelect(trainer)}
-                  className="border border-gray-200 dark:border-gray-600 rounded-lg p-4 cursor-pointer hover:border-red-500 hover:shadow-md transition-all"
+      <AnimatePresence>
+        {showTrainerSelection && (
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white dark:bg-gray-800 rounded-2xl w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl"
+            >
+              <div className="p-6 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                <h3 className="text-xl font-bold text-gray-900 dark:text-white">Select a Personal Trainer</h3>
+                <button
+                  onClick={() => setShowTrainerSelection(false)}
+                  className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
                 >
-                  <div className="text-center mb-4">
-                    <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-3">
-                      <FaUser className="w-8 h-8 text-gray-400 dark:text-gray-300" />
-                    </div>
-                    <h4 className="font-semibold text-gray-800 dark:text-white">{trainer.name}</h4>
-                    <div className="flex items-center justify-center space-x-1 mt-1">
-                      {renderStars(trainer.rating)}
-                      <span className="text-sm text-gray-600 dark:text-gray-300 ml-1">
-                        {trainer.rating} ({trainer.reviews} reviews)
-                      </span>
-                    </div>
-                  </div>
+                  <FaTimes className="w-5 h-5 text-gray-500" />
+                </button>
+              </div>
 
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">Specializations</p>
-                      <div className="flex flex-wrap gap-1">
-                        {trainer.specialization.slice(0, 2).map((spec, index) => (
-                          <span key={index} className="px-2 py-1 bg-red-50 text-red-700 text-xs rounded-full">
-                            {spec}
-                          </span>
-                        ))}
-                        {trainer.specialization.length > 2 && (
-                          <span className="px-2 py-1 bg-gray-50 text-gray-600 text-xs rounded-full">
-                            +{trainer.specialization.length - 2} more
-                          </span>
-                        )}
+              <div className="flex-1 overflow-y-auto p-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {trainers.map((trainer) => (
+                    <div
+                      key={trainer.id}
+                      onClick={() => handleTrainerSelect(trainer)}
+                      className="group border border-gray-200 dark:border-gray-700 rounded-xl p-5 cursor-pointer hover:border-red-500 dark:hover:border-red-500 hover:shadow-md transition-all bg-white dark:bg-gray-800"
+                    >
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className="w-14 h-14 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center shrink-0">
+                          <FaUser className="w-6 h-6 text-gray-400 dark:text-gray-300" />
+                        </div>
+                        <div>
+                          <h4 className="font-bold text-gray-900 dark:text-white group-hover:text-red-600 transition-colors">{trainer.name}</h4>
+                          <div className="flex items-center gap-1 text-sm">
+                            <FaStar className="text-yellow-400 w-3 h-3" />
+                            <span className="font-medium text-gray-700 dark:text-gray-300">{trainer.rating}</span>
+                            <span className="text-gray-400">({trainer.reviews})</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex flex-wrap gap-1">
+                          {trainer.specialization.slice(0, 3).map((spec, index) => (
+                            <span key={index} className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 text-xs rounded-md">
+                              {spec}
+                            </span>
+                          ))}
+                        </div>
+                        <p className="text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{trainer.bio}</p>
+                        <button className="w-full py-2 mt-2 bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium group-hover:bg-red-600 group-hover:text-white transition-all">
+                          Select Trainer
+                        </button>
                       </div>
                     </div>
-
-                    <div className="text-center py-2 bg-gray-50 dark:bg-gray-700 rounded">
-                      <p className="text-xs text-gray-600 dark:text-gray-300">{trainer.experience} years experience</p>
-                    </div>
-
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleTrainerSelect(trainer);
-                      }}
-                      className="w-full px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors text-sm"
-                    >
-                      Select Trainer
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
 
-            {trainers.length === 0 && (
-              <div className="text-center py-8">
-                <FaUser className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-600 dark:text-gray-300">No trainers available at the moment.</p>
+                {trainers.length === 0 && (
+                  <div className="text-center py-12">
+                    <FaUser className="w-16 h-16 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No trainers available at the moment.</p>
+                  </div>
+                )}
               </div>
-            )}
+            </motion.div>
           </div>
-        </div>
-      )}
+        )}
+      </AnimatePresence>
     </div>
   );
 };
+
+// Helper component for icons (if needed)
+const FaTimes = ({ className }) => (
+  <svg stroke="currentColor" fill="currentColor" strokeWidth="0" viewBox="0 0 512 512" className={className} height="1em" width="1em" xmlns="http://www.w3.org/2000/svg">
+    <path d="M289.94 256l95-95A24 24 0 00351 127l-95 95-95-95a24 24 0 00-34 34l95 95-95 95a24 24 0 1034 34l95-95 95 95a24 24 0 0034-34z"></path>
+  </svg>
+);
 
 export default SubscriptionPage;

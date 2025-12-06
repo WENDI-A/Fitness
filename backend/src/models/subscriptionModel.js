@@ -44,10 +44,9 @@ const Subscription = sequelize.define("Subscription", {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-    price: {
+  total_amount: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true,
-    field: 'total_amount'   // maps model.price to DB column total_amount
   },
   membership_type: {
     type: DataTypes.STRING,

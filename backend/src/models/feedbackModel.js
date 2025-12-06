@@ -23,11 +23,7 @@ const Feedback = sequelize.define("Feedback", {
       key: "id",
     },
   },
-  class_id: {
-    type: DataTypes.INTEGER,
-    allowNull: true,
-     
-  },
+   
   rating: {
     type: DataTypes.INTEGER,
     allowNull: false,

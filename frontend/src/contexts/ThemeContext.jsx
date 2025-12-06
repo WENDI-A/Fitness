@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 
 const ThemeContext = createContext();
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useTheme = () => {
   const context = useContext(ThemeContext);
   if (!context) {
@@ -15,19 +16,19 @@ export const ThemeProvider = ({ children }) => {
     // Check localStorage first, then system preference
     const savedTheme = localStorage.getItem('fitness-theme');
     if (savedTheme) return savedTheme;
-    
+
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
   useEffect(() => {
     const root = window.document.documentElement;
-    
+
     // Remove previous theme classes
     root.classList.remove('light', 'dark');
-    
+
     // Add current theme class
     root.classList.add(theme);
-    
+
     // Save to localStorage
     localStorage.setItem('fitness-theme', theme);
   }, [theme]);

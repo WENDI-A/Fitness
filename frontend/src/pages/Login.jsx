@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import apiService from "../services/api";
+import { loginUser } from "../services/api/authApi";
 
 const Login = ({ onLogin, onSwitchToRegister }) => {
   const [formData, setFormData] = useState({
@@ -22,8 +22,11 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
     setError("");
 
     try {
-      const response = await apiService.loginUser(formData);
+      const response = await loginUser(formData);
+      // Store token with expiration timestamp (7 days)
+      const expirationTime = new Date().getTime() + (7 * 24 * 60 * 60 * 1000);
       localStorage.setItem("token", response.token);
+      localStorage.setItem("tokenExpiration", expirationTime.toString());
       localStorage.setItem("user", JSON.stringify(response.user));
       onLogin(response.user);
     } catch {
@@ -37,7 +40,7 @@ const Login = ({ onLogin, onSwitchToRegister }) => {
     <div className="min-h-[80vh] bg-black flex items-center justify-center px-4 py-8">
       <div className="bg-[#1c2536] p-6 rounded-xl w-full max-w-md">
         <h2 className="text-3xl font-bold text-white text-center mb-6">Login</h2>
-        
+
         {error && (
           <div className="bg-red-500 text-white p-3 rounded mb-4 text-center">
             {error}

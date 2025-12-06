@@ -1,6 +1,7 @@
 import nobody from "../assets/nobody.jpeg";
 import spa from "../assets/spa.png";
 import expert from "../assets/expert.avif";
+import { motion } from "framer-motion"; // eslint-disable-line no-unused-vars
 
 const images = [
   {
@@ -28,37 +29,64 @@ const images = [
 
 const About = () => {
   return (
-    <div className="pt-20 px-4 pb-12 bg-white text-gray-800 dark:bg-gray-900 dark:text-white">
+    <div className="py-20 bg-white text-gray-800 dark:bg-gray-900 dark:text-white overflow-hidden">
       {/* Title Section */}
-      <div className="text-center mb-12">
-        <h1 className="text-4xl font-bold">About Us</h1>
-        <p className="max-w-xl mx-auto font-bold text-gray-500 dark:text-gray-300 mt-4">
-          <span className="text-red-500">About Latest Fitness</span> – Hawassa's most exclusive fitness and wellness sanctuary, where luxury meets health in perfect harmony.
-        </p>
+      <div className="text-center mb-20 px-4">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6 }}
+          className="text-4xl md:text-5xl font-extrabold mb-6"
+        >
+          About Us
+        </motion.h1>
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="max-w-2xl mx-auto text-lg text-gray-600 dark:text-gray-300 leading-relaxed"
+        >
+          <span className="text-red-600 font-bold">FitnessPro</span> – Hawassa's most exclusive fitness and wellness sanctuary, where luxury meets health in perfect harmony.
+        </motion.p>
       </div>
 
       {/* Image/Text Sections */}
-      <div className="space-y-12">
+      <div className="space-y-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {images.map((item, index) => (
-          <div
+          <motion.div
             key={item.id}
-            className={`flex flex-col md:flex-row items-center gap-8 p-6 ${
-              index % 2 === 1 ? "md:flex-row-reverse" : ""
-            }`}
+            initial={{ opacity: 0, y: 50 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true, margin: "-100px" }}
+            transition={{ duration: 0.8 }}
+            className={`flex flex-col md:flex-row items-center gap-12 ${index % 2 === 1 ? "md:flex-row-reverse" : ""
+              }`}
           >
             {/* Image */}
-            <img
-              src={item.img}
-              alt={item.name}
-              className="w-full h-56 md:h-80 object-cover rounded-xl"
-            />
+            <div className="w-full md:w-1/2 relative group">
+              <div className="absolute inset-0 bg-red-600 rounded-2xl transform rotate-3 group-hover:rotate-6 transition-transform duration-300 opacity-20"></div>
+              <img
+                src={item.img}
+                alt={item.name}
+                className="w-full h-64 md:h-96 object-cover rounded-2xl shadow-2xl relative z-10 transform transition-transform duration-500 group-hover:-translate-y-2"
+              />
+            </div>
 
             {/* Text Content */}
-            <div className="w-full text-left">
-              <h3 className="text-3xl font-bold mb-2">{item.name}</h3>
-              <p className="text-sm leading-relaxed text-gray-700 dark:text-gray-300">{item.description}</p>
+            <div className="w-full md:w-1/2 text-left space-y-6">
+              <div className="inline-block p-3 rounded-full bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 font-bold text-xl mb-2">
+                0{index + 1}
+              </div>
+              <h3 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white">
+                {item.name}
+              </h3>
+              <p className="text-lg leading-relaxed text-gray-600 dark:text-gray-300">
+                {item.description}
+              </p>
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </div>

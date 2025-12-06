@@ -1,6 +1,5 @@
 import express from "express";
 import cors from "cors";
-import bodyParser from "body-parser";
 import userRoutes from "./routes/userRoutes.js";
 import membershipRoutes from "./routes/membershipRoutes.js";
 import dashboardRoutes from "./routes/dashboardRoutes.js";
@@ -8,16 +7,28 @@ import paymentRoutes from "./routes/paymentRoutes.js";
 import subscriptionRoutes from "./routes/subscriptionRoutes.js";
 import feedbackRoutes from "./routes/feedbackRoutes.js";
 import trainerRoutes from "./routes/trainerRoutes.js";
- 
- 
- 
+import adminRoutes from "./routes/adminRoutes.js";
+import notificationRoutes from "./routes/notificationRoutes.js";
+import contactRoutes from "./routes/contactRoutes.js";
+
+
+
 
 const app = express();
 
 // Middleware
 app.use(cors());
-app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({ extended: true }));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Debug middleware to check if body is being parsed
+// app.use((req, res, next) => {
+//   console.log('Request Method:', req.method);
+//   console.log('Request URL:', req.url);
+//   console.log('Request Body:', req.body);
+//   console.log('Content-Type:', req.headers['content-type']);
+//   next();
+// });
 
 // Routes
 app.use("/api/users", userRoutes);
@@ -26,7 +37,10 @@ app.use("/api/payments", paymentRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
 app.use("/api/feedback", feedbackRoutes);
 app.use("/api/trainers", trainerRoutes);
- 
+app.use("/api/admin", adminRoutes);
+app.use("/api/notifications", notificationRoutes);
+app.use("/api/contact", contactRoutes);
+
 
 // bleClasses);
 

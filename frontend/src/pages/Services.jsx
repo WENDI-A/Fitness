@@ -1,48 +1,73 @@
-import React from "react";
 import PricingCard from "../component/PricingCard";
 import pricingData from "../component/pricingData";
+import { motion } from "framer-motion"; // eslint-disable-line no-unused-vars
 
 const Services = () => {
+  const categories = [
+    { id: "individual", title: "Individual Packages" },
+    { id: "group", title: "Group Package S&C Classes" },
+    { id: "family", title: "Family Packages" },
+    { id: "personalized", title: "Personalized Package" }
+  ];
 
   return (
-  <section id="service" className="py-16 px-4 bg-white text-gray-800 dark:bg-gray-900 dark:text-white">
-    <h1 className="text-center text-3xl font-bold mb-8">💪 Membership Packages</h1>
-    <h2 className="text-center text-xl mb-8">
-          Choose the perfect plan to achieve your fitness goals
-        </h2>
-
-        {/* Individual Section */}
-  <h1 className="text-center text-3xl font-bold mb-8 mt-20">Individual Packages</h1>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {pricingData
-            .filter(item => item.category === "individual")
-            .map((item, i) => <PricingCard key={i} {...item} />)}
+    <section id="services" className="py-20 bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-white transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center mb-16">
+          <motion.h1
+            initial={{ opacity: 0, y: -20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="text-4xl md:text-5xl font-extrabold mb-4"
+          >
+            Membership <span className="text-red-600">Packages</span>
+          </motion.h1>
+          <motion.p
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="text-xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto"
+          >
+            Choose the perfect plan to achieve your fitness goals. Flexible options for everyone.
+          </motion.p>
         </div>
 
-        {/* Group Section */}
-  <h1 className="text-center text-3xl font-bold mb-8 mt-20">Group Package S&C Classes</h1>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {pricingData
-            .filter(item => item.category === "group")
-            .map((item, i) => <PricingCard key={i} {...item} />)}
-        </div>
+        <div className="space-y-20">
+          {categories.map((category, index) => {
+            const categoryItems = pricingData.filter(item => item.category === category.id);
 
-        {/* Family Section */}
-  <h1 className="text-center text-3xl font-bold mb-8 mt-20">Family Packages</h1>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {pricingData
-            .filter(item => item.category === "family")
-            .map((item, i) => <PricingCard key={i} {...item} />)}
-        </div>
+            if (categoryItems.length === 0) return null;
 
-        {/* Personalized Section */}
-  <h1 className="text-center text-3xl font-bold mb-8 mt-20">Personalized Package</h1>
-        <div className="max-w-6xl mx-auto grid md:grid-cols-3 gap-6">
-          {pricingData
-            .filter(item => item.category === "personalized")
-            .map((item, i) => <PricingCard key={i} {...item} />)}
+            return (
+              <motion.div
+                key={category.id}
+                initial={{ opacity: 0, y: 40 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-50px" }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+              >
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                  <h2 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white uppercase tracking-wide">
+                    {category.title}
+                  </h2>
+                  <div className="h-px flex-1 bg-gray-200 dark:bg-gray-700"></div>
+                </div>
+
+                <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 justify-center">
+                  {categoryItems.map((item, i) => (
+                    <div key={i} className="h-full">
+                      <PricingCard {...item} />
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
-      </section>
+      </div>
+    </section>
   );
 };
 

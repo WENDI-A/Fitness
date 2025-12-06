@@ -48,6 +48,10 @@ const User = sequelize.define("User", {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  status: {
+    type: DataTypes.ENUM("pending", "accepted", "declined"),
+    defaultValue: "pending",
+  },
 });
 
 export default User;

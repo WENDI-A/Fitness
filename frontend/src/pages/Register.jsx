@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import apiService from "../services/api";
+import { registerUser } from "../services/api/authApi";
 
 const Register = ({ onRegister, onSwitchToLogin }) => {
   const [formData, setFormData] = useState({
@@ -33,10 +33,11 @@ const Register = ({ onRegister, onSwitchToLogin }) => {
     }
 
     try {
-      const { confirmPassword, ...userData } = formData;
-      const response = await apiService.registerUser(userData);
-      onRegister(response);
-    } catch (err) {
+  const userData = { ...formData };
+  delete userData.confirmPassword;
+  const response = await registerUser(userData);
+  onRegister(response);
+    } catch {
       setError("Registration failed. Please try again.");
     } finally {
       setLoading(false);

@@ -22,8 +22,7 @@ CREATE TABLE users (
     email VARCHAR(100) UNIQUE NOT NULL,
     phone VARCHAR(20) NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
-    role ENUM('member', 'tDROP TABLE IF EXISTS feedback;
-rainer', 'admin') DEFAULT 'member',
+    role ENUM('member', 'trainer', 'admin') DEFAULT 'member',
     date_of_birth DATE,
     gender ENUM('male', 'female', 'other'),
     emergency_contact VARCHAR(100),
@@ -31,6 +30,7 @@ rainer', 'admin') DEFAULT 'member',
     address TEXT,
     is_active BOOLEAN DEFAULT TRUE,
     email_verified BOOLEAN DEFAULT FALSE,
+    status ENUM('pending', 'accepted', 'declined') DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -64,7 +64,7 @@ CREATE TABLE memberships (
 -- 3. TRAINERS TABLE (Enhanced)
 CREATE TABLE trainers (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT UNIQUE NOT NULL,
+    user_id INT NOT NULL,
     specializations JSON COMMENT 'Array of specializations: ["Yoga", "HIIT", "Strength Training"]',
     certifications JSON COMMENT 'Array of certifications: ["RYT-500", "NASM-CPT"]',
     experience_years INT DEFAULT 0,
@@ -84,8 +84,10 @@ CREATE TABLE trainers (
     -- Indexes
     INDEX idx_trainers_rating (rating),
     INDEX idx_trainers_active (is_active),
-    INDEX idx_trainers_experience (experience_years)
+    INDEX idx_trainers_experience (experience_years),
+    INDEX idx_trainers_user (user_id)
 );
+
 
 -- 4. SUBSCRIPTIONS TABLE (Enhanced)
 CREATE TABLE subscriptions (
@@ -248,6 +250,46 @@ INSERT INTO memberships (name, description, category, duration_months, price, fe
 ('3 Month Personalized', '3 Month personalized package — one-on-one coaching included', 'personalized', 3, 18690.00, '["Personalized training program", "5 Free Guest Coupons", "One-on-one coaching", "Full gym access", "Clean shower & dressing room", "Secure parking", "Flexible class timing"]', 0, TRUE),
 ('6 Month Personalized', '6 Month personalized package — extended one-on-one program', 'personalized', 6, 35700.00, '["15 free pass days included", "10 Free Guest Coupons", "Flexible class timing", "Full gym access", "Clean shower & dressing room", "Secure parking"]', 0, TRUE),
 ('12 Month Personalized', '12 Month personalized package — premium long-term coaching', 'personalized', 12, 68040.00, '["0 free pass days included", "20 Free Guest Coupons", "Flexible class timing", "Full gym access", "Clean shower & dressing room", "Secure parking"]', 0, TRUE);
+
+-- Add notifications table
+CREATE TABLE notifications (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type ENUM('info', 'warning', 'error', 'success') DEFAULT 'info',
+    related_id INT NULL COMMENT 'ID of related entity (user, payment, etc.)',
+    priority ENUM('low', 'medium', 'high') DEFAULT 'medium',
+    is_read BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Indexes
+    INDEX idx_notifications_read (is_read),
+    INDEX idx_notifications_type (type),
+    INDEX idx_notifications_priority (priority),
+    INDEX idx_notifications_created (created_at)
+);
+
+-- Add contact messages table
+CREATE TABLE contact_messages (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20) NOT NULL,
+    message TEXT NOT NULL,
+    status ENUM('new', 'read', 'responded', 'archived') DEFAULT 'new',
+    user_id INT NULL COMMENT 'If user is logged in',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    
+    -- Foreign Key
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
+    
+    -- Indexes
+    INDEX idx_contact_status (status),
+    INDEX idx_contact_email (email),
+    INDEX idx_contact_created (created_at)
+);
 
 -- Insert sample trainers
 INSERT INTO trainers (user_id, specializations, certifications, experience_years, hourly_rate, bio, availability, rating, total_reviews) VALUES

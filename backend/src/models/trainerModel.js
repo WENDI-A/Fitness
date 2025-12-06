@@ -1,26 +1,26 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const Trainer = sequelize.define("Trainer", {
+const Trainer = sequelize.define("trainers", {
   id: {
     type: DataTypes.INTEGER,
     primaryKey: true,
     autoIncrement: true,
   },
-  user_id: {
-    type: DataTypes.INTEGER,
+  first_name: {
+    type: DataTypes.STRING,
     allowNull: false,
-    references: {
-      model: "Users",
-      key: "id",
-    },
   },
-  specialization: {
+  last_name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  specializations: {
     type: DataTypes.JSON,
     allowNull: true,
   },
-  certification: {
-    type: DataTypes.TEXT,
+  certifications: {
+    type: DataTypes.JSON,
     allowNull: true,
   },
   experience_years: {
@@ -45,10 +45,25 @@ const Trainer = sequelize.define("Trainer", {
     allowNull: true,
     defaultValue: 0.00,
   },
+  total_reviews: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0,
+  },
   is_active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,
   },
+  hire_date: {
+    type: DataTypes.DATEONLY,
+    allowNull: true,
+  },
+}, {
+  timestamps: true, // handles createdAt & updatedAt
+  indexes: [
+    { fields: ["rating"] },
+    { fields: ["is_active"] },
+    { fields: ["experience_years"] },
+  ],
 });
 
 export default Trainer;
