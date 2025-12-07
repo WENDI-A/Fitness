@@ -12,8 +12,13 @@ sequelize.sync({ force: false })
   .then(() => {
     console.log("All models synced");
 
+
   })
   .then(() => console.log("Database seeded"))
   .catch(err => console.error("Sync Error: ", err));
+
+app.get("/", (req, res) => {
+  res.send("Backend is running successfully 🚀");
+});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
