@@ -36,7 +36,7 @@ const Contact = sequelize.define(
             type: DataTypes.INTEGER,
             allowNull: true,
             references: {
-                model: 'users',
+                model: 'Users',
                 key: 'id',
             },
         },
