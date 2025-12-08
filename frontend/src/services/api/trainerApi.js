@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = 'https://fitness-kykn.vercel.app/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
@@ -40,7 +40,7 @@ export const getTrainerAvailability = async (trainerId, date) => {
   try {
     const params = new URLSearchParams();
     if (date) params.append('date', date);
-    
+
     const response = await fetch(`${API_BASE_URL}/trainers/${trainerId}/availability?${params}`, {
       headers: getAuthHeaders(),
     });

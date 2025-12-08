@@ -1,11 +1,11 @@
-const API_BASE_URL = "http://localhost:5000/api";
+const API_BASE_URL = 'https://fitness-kykn.vercel.app/api';
 
 // Helper function to get auth headers
 const getAuthHeaders = () => {
   const token = localStorage.getItem("token");
   return {
     "Content-Type": "application/json",
-    
+
     Authorization: `Bearer ${token}`,
   };
 };
@@ -14,7 +14,7 @@ const getAuthHeaders = () => {
 export const getUserFeedback = async (userId) => {
   try {
     const response = await fetch(`${API_BASE_URL}/feedback/${userId}`, {
-      method:"GET",
+      method: "GET",
       headers: getAuthHeaders(),
     });
     if (!response.ok) throw new Error("Failed to fetch feedback");
@@ -37,14 +37,14 @@ export const createFeedback = async (feedbackData) => {
     const data = await response.json();
 
     if (!response.ok) {
-        throw new Error(data.message || "Failed to create feedback")
-      
+      throw new Error(data.message || "Failed to create feedback")
+
     }
 
     return data;
 
-     
-     
+
+
   } catch (error) {
     console.error("Create feedback error:", error);
     throw error;

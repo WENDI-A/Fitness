@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'https://fitness-kykn.vercel.app/api';
 
 const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
@@ -10,9 +10,9 @@ const getAuthHeaders = () => {
 
 // User Management
 export const getUsersForAdmin = async () => {
-  const res = await fetch(`${API_BASE_URL}/admin/users`, 
-    { 
-        headers: getAuthHeaders() 
+  const res = await fetch(`${API_BASE_URL}/admin/users`,
+    {
+      headers: getAuthHeaders()
     });
   if (!res.ok) throw new Error('Failed to fetch admin users');
   return res.json();
@@ -25,9 +25,9 @@ export const acceptUser = async (userId) => {
 };
 
 export const declineUser = async (userId) => {
-  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/decline`, 
-    { 
-        method: 'POST', headers: getAuthHeaders() 
+  const res = await fetch(`${API_BASE_URL}/admin/users/${userId}/decline`,
+    {
+      method: 'POST', headers: getAuthHeaders()
     });
   if (!res.ok) throw new Error('Failed to decline user');
   return res.json();

@@ -1,4 +1,5 @@
-// import { Membership } from "../models/index.js";
+import { Membership, User } from "../models/index.js";
+import bcrypt from "bcrypt";
 
 // const membershipData = [
 //   // Individual Packages
@@ -79,7 +80,7 @@
 //     ],
 //     is_highlighted: false,
 //   },
-
+// 
 //   // Group Packages
 //   {
 //     name: "3 Month",
@@ -132,7 +133,7 @@
 //     ],
 //     is_highlighted: false,
 //   },
-
+// 
 //   // Family Packages
 //   {
 //     name: "3 Month",
@@ -149,7 +150,7 @@
 //     ],
 //     is_highlighted: false,
 //   },
-
+// 
 //   // Personalized Packages
 //   {
 //     name: "3 Month",
@@ -201,12 +202,12 @@
 //     is_highlighted: false,
 //   },
 // ];
-
+// 
 // export const seedMemberships = async () => {
 //   try {
 //     // Clear existing memberships and restart identities to ensure deterministic ids
 //     await Membership.destroy({ where: {}, truncate: true, restartIdentity: true });
-
+// 
 //     // We will seed exactly 12 membership records and assign ids 1..12.
 //     const toSeed = membershipData.slice(0, 12).map((m, idx) => ({
 //       id: idx + 1,
@@ -219,12 +220,40 @@
 //       is_highlighted: m.is_highlighted || false,
 //       is_active: true,
 //     }));
-
+// 
 //     await Membership.bulkCreate(toSeed, { ignoreDuplicates: true });
 //     console.log("Membership table reset and seeded with 12 pricing entries (ids 1..12)");
 //   } catch (error) {
 //     console.error("Error seeding membership data:", error);
 //   }
 // };
+
+export const seedAdmin = async () => {
+    try {
+        const adminEmail = "admin@fitness.com";
+        const adminExists = await User.findOne({ where: { email: adminEmail } });
+
+        if (!adminExists) {
+            const hashedPassword = await bcrypt.hash("admin123", 10);
+            await User.create({
+                first_name: "Admin",
+                last_name: "User",
+                email: adminEmail,
+                phone: "+251911123460",
+                password_hash: hashedPassword,
+                role: "admin",
+                gender: "other",
+                is_active: true,
+                email_verified: true,
+                status: "accepted"
+            });
+            console.log("Admin user seeded successfully");
+        } else {
+            console.log("Admin user already exists");
+        }
+    } catch (error) {
+        console.error("Error seeding admin user:", error);
+    }
+};
 
 // export default membershipData;
